@@ -1,0 +1,9 @@
+package completion
+
+// this file is auto created.
+
+var gitCommands = []string{
+{%- for command in commands %}
+	"{{ command }}",
+{%- endfor %}
+}

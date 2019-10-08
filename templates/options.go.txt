@@ -1,0 +1,34 @@
+package completion
+
+// this file is auto created.
+
+type Option struct {
+	Keys     []string
+	Values   []string
+	Depth    int
+	Optional bool
+	Multiple []bool
+	Group    int
+	Order    int
+	Serial   int
+}
+
+
+var Options = map[string][]Option{
+{% for command, options in options_dict.items() %}
+	"{{ command }}": []Option{
+		{%- for option in options %}
+		Option{
+			[]string{ {% for k in option['keys'] %}"{{ k or '' }}", {% endfor%} },
+			[]string{ {% for v in option['values'] %}"{{ v or '' }}", {% endfor%} },
+			{{ option['depth'] }},
+			{% if option['optional'] %}true{% else %}false{% endif %},
+			[]bool{ {% for m in option['multiple'] %}{% if m%}true{% else %}false{% endif %}, {% endfor%} },
+			{{ option['group'] }},
+			{{ option['order'] }},
+			{{ option['serial'] }},
+		},
+		{%- endfor %}
+	},
+{% endfor %}
+}

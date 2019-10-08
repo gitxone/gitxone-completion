@@ -11,6 +11,9 @@ RULES = {
         r'\<([a-z]+)\s([a-z]+)\s+([a-z]+)\>': r'<\1-\2-\3>',
         r'\\--': r'',
     },
+    'add': {
+        r'--chmod=\(\+\|-\)x': r'--chmod=(<=+x>|<=-x>)',
+    },
     'archimport': {
         r'<archive/branch>\[:<git-branch>\] ...': r'<archive/branch:git-branch>...',
     },

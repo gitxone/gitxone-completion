@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from collections import defaultdict
 
 import jinja2
 
@@ -7,10 +8,10 @@ import fixers
 import analyzers
 
 COMMANDS_TEMPLATE = './templates/commands.go.txt'
-COMMANDS_OUTPUT = './outputs/commands.go'
+COMMANDS_OUTPUT = '../commands.go'
 
 OPTIONS_TEMPLATE = './templates/options.go.txt'
-OPTIONS_OUTPUT = './outputs/options.go'
+OPTIONS_OUTPUT = '../options.go'
 
 
 def render_commands():
@@ -40,12 +41,25 @@ def render_options():
 
         options_dict[command] = options = []
         serial = 0
+        group_keys = defaultdict(set)
         for group, arg in enumerate(args):
             text = fixers.regex_replace(arg, command)
             tmp = analyzers.parse(text)
             for order, o in enumerate(tmp):
                 options += [{**o, 'group': group, 'order': order, 'serial': serial}]
                 serial += 1
+                group_keys[group].update(o['keys'])
+
+        for option in options:
+            invalid_serials = set()
+            for group, keys in group_keys.items():
+                if not keys.issuperset(option['keys']):
+                    invalid_serials.update({
+                        o['serial']
+                        for o in options
+                        if o['group'] == group
+                    })
+            option['invalid_serials'] = invalid_serials
 
     with open(OPTIONS_TEMPLATE) as f:
         template = jinja2.Template(f.read())
@@ -59,3 +73,4 @@ def render_options():
 if __name__ == '__main__':
     render_commands()
     render_options()
+

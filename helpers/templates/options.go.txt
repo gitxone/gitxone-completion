@@ -3,14 +3,15 @@ package completion
 // this file is auto created.
 
 type Option struct {
-	Keys     []string
-	Values   []string
-	Depth    int
-	Optional bool
-	Multiple []bool
-	Group    int
-	Order    int
-	Serial   int
+	Keys           []string
+	Values         []string
+	Depth          int
+	Optional       bool
+	Multiple       []bool
+	Group          int
+	Order          int
+	Serial         int
+	InvalidSerials []int
 }
 
 
@@ -27,6 +28,7 @@ var Options = map[string][]Option{
 			{{ option['group'] }},
 			{{ option['order'] }},
 			{{ option['serial'] }},
+			[]int{ {% for s in option['invalid_serials'] %}{{ s }}, {% endfor %} },
 		},
 		{%- endfor %}
 	},

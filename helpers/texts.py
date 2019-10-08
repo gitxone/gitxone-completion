@@ -1,7 +1,7 @@
 import pathlib
 import re
 
-DOCS_PATH = pathlib.Path('./git/Documentation/')
+DOCS_PATH = pathlib.Path('../git/Documentation/')
 
 
 def extract(f, command):

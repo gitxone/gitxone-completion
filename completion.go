@@ -9,7 +9,7 @@ import (
 
 type Status struct {
 	state    int
-	value    string
+	values   []string
 	optional bool
 }
 
@@ -41,7 +41,7 @@ func Complete(path string, tokens []string) []string {
 		return []string{}
 	}
 	result := make([]string, 0)
-	for _, suggestion := range suggest(options, tokens[1:]) {
+	for _, suggestion := range suggest(options, tokens[1:len(tokens)-1]) {
 		if suggestion == "" {
 			continue
 		}
@@ -60,18 +60,16 @@ func Complete(path string, tokens []string) []string {
 	return result
 }
 
-func (t *Option) getValue(key string) (string, bool, bool) {
-	index := -1
+func (t *Option) getValues(key string) ([]string, []bool, bool) {
+	values := make([]string, 0)
+	multiple := make([]bool, 0)
 	for i, k := range t.Keys {
 		if k == key {
-			index = i
-			break
+			values = append(values, t.Values[i])
+			multiple = append(multiple, t.Multiple[i])
 		}
 	}
-	if index == -1 {
-		return "", false, false
-	}
-	return t.Values[index], t.Multiple[index], true
+	return values, multiple, len(values) != 0
 }
 
 func suggest(options []Option, tokens []string) []string {
@@ -112,21 +110,27 @@ func suggest(options []Option, tokens []string) []string {
 				done[serial] = status
 			}
 
-			value, multiple, found := option.getValue(token)
+			values, multiple, found := option.getValues(token)
 			if found {
+				joined := strings.Join(values, "")
+				firstValue := values[0]
 				for _, s := range option.InvalidSerials {
-					done[s] = Status{REMOVED, "", false}
+					done[s] = Status{REMOVED, values, false}
 				}
-				if value == "" {
-					if multiple {
-						done[serial] = Status{WAITING, "", false}
+				if joined == "" {
+					if multiple[0] {
+						done[serial] = Status{WAITING, values, false}
 					} else {
-						done[serial] = Status{DONE, "", false}
+						done[serial] = Status{DONE, values, false}
 					}
-				} else if value[len(value)-1] == '?' {
-					done[serial] = Status{OPTIONAL, value[:len(value)-1], true}
+				} else if firstValue[len(firstValue)-1] == '?' {
+					vs := make([]string, 0)
+					for _, v := range values {
+						vs = append(vs, strings.Trim(v, "?"))
+					}
+					done[serial] = Status{OPTIONAL, vs, true}
 				} else {
-					done[serial] = Status{SHORT, value, false}
+					done[serial] = Status{SHORT, values, false}
 				}
 			}
 		}
@@ -137,7 +141,9 @@ func suggest(options []Option, tokens []string) []string {
 	for serial := range options {
 		status, marked := done[serial]
 		if marked && status.state == SHORT {
-			result = append(result, formatStringAsValue(status.value))
+			for _, v := range status.values {
+				result = append(result, formatStringAsValue(v))
+			}
 			return result
 		}
 	}
@@ -170,9 +176,9 @@ func suggest(options []Option, tokens []string) []string {
 			continue
 		case REMOVED:
 			continue
-		case SHORT:
-			result = append(result, status.value)
-			break
+		//case SHORT:
+		//	result = append(result, status.value)
+		//	break
 		}
 		result = append(result, option.Keys...)
 		for index, v := range option.Values {
@@ -221,3 +227,4 @@ func getFiles(path string, lastToken string) []string {
 	}
 	return paths
 }
+
